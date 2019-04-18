@@ -37,7 +37,7 @@ while norm(u_bar - u_bar_prev) > epsilon
     % getting our control
     
     % TODO: compute linear terms in cost function
-    qf = 
+    qf = Qf' * (x_bar(:,end) - goal_state);
     
     % initialize value terms at terminal cost
     P = Qf;
@@ -48,8 +48,8 @@ while norm(u_bar - u_bar_prev) > epsilon
         [A,B,c] = linearize_dyn(x_bar(:,t),u_bar(:,t),dt);
         
         % TODO: again, only need to compute linear terms in cost function 
-        q = 
-        r =
+        q = Q' * (x_bar(:,t) - goal_state);
+        r = R' * u_bar(:,t);
         
         [lt,Lt,P,p] = backward_riccati_recursion(P,p,A,B,Q,q,R,r);
         l(:,t) = lt;
@@ -60,7 +60,10 @@ while norm(u_bar - u_bar_prev) > epsilon
     u_bar_prev = u_bar; % used to check termination condition
     
     for t=1:num_steps
-        u_bar(:,t) = % TODO: implement control update
+        % TODO: implement control update
+        dx = x_bar(:,t) - x_bar_prev(:,t);
+        du = l(:,t) + L(:,:,t) * dx;
+        u_bar(:,t) = u_bar_prev(:,t) + du;
         x_bar(:,t+1) = f(x_bar(:,t),u_bar(:,t),dt);
     end
     
@@ -76,4 +79,18 @@ function [l,L,P,p] = backward_riccati_recursion(P,p,A,B,Q,q,R,r)
 % TODO: write backward riccati recursion step, 
 % return controller terms l,L and value terms p,P
 % refer to lecture 4 slides
+n = size(Q,1);
+m = size(R,1);
+H = zeros(m,n); % no cross term for us
+Q_uuk = R + B' * P * B;
+Q_xxk = Q + A' * P * A;
+Q_uxk = H + B' * P * A;
+Q_uk = r + B' * p;
+Q_xk = q + A' * p;
+L = -Q_uuk\Q_uxk;
+l = -Q_uuk\Q_uk;
+pnew = Q_xk - L'*Q_uuk*l;
+Pnew = Q_xxk - L'*Q_uuk*L;
+P = Pnew;
+p = pnew;
 end

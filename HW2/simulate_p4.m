@@ -10,7 +10,7 @@
 clear all; clc; close all;
 
 animate = true; % change to visualize animation
-noise = false; % change to toggle stochastic disturbance
+noise = true; % change to toggle stochastic disturbance
 
 f = @sim_cartpole;
 dt = 0.1; % we work with discrete time
@@ -55,9 +55,19 @@ end
 
 figure; 
 plot(x');
+legend({'Horizontal position $$x$$',...
+    'Angle of pendulum $$\theta$$',...
+    'Horizontal velocity $$\dot{x}$$',...
+    'Angular velocity of pendulum $$\dot{\theta}$$'}, 'Interpreter','latex')
+xlabel('Time');
+title('State evolution with time')
 
 figure; 
 plot(u,'--');
+ylabel('Control effort');
+xlabel('Time');
+title('Control effort evolution with time')
+
 
 if animate
     for t=1:ep_length
