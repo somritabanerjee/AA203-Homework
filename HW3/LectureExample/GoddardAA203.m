@@ -68,13 +68,13 @@ load('goddardAA203.mat')
 
 % Section for J(t=-4.5)
 figure;
-ind = find(tau==(tMax-4.5));
+ind = find(tau==4.5);
 visSetIm(g, data(:,:,:,ind));
 title('Section for $$V(t=-4.5)$$','Interpreter','latex');
 
 % Section for J(t=-5.5)
 figure;
-ind = find(tau==(tMax-5.5));
+ind = find(tau==5.5);
 visSetIm(g, data(:,:,:,ind));
 title('Section for $$V(t=-5.5)$$','Interpreter','latex');
 

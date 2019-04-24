@@ -35,9 +35,11 @@ for tf =[10,100]
 
     uStar = zeros(size(revV,1),1);
     x = zeros(2,size(revV,1));
+    K = zeros(2,size(revV,1));
     x(:,1) = [1;1];
     for i = 1: size(revV,1)
-        uStar(i) = -(R\(B.'))*revV{i}*x(:,i);
+        K(:,i) = -(R\(B.'))*revV{i};
+        uStar(i) = K(:,i)'*x(:,i);
         if i ~= size(revV,1)
             dxdt = A*x(:,i) + B*uStar(i);
             x(:,i+1) = x(:,i) + dxdt * dt;
@@ -65,10 +67,11 @@ for tf =[10,100]
     grid on
     
     figure
-    plot(forwardTime,uStar)
-    title('Control effort vs time','Interpreter','latex','FontSize',20)
+    plot(forwardTime,K)
+    title('Control gains vs time','Interpreter','latex','FontSize',20)
     xlabel('Time $$t$$','Interpreter','latex','FontSize',20)
-    ylabel('Control effort $$u$$','Interpreter','latex','FontSize',20)
+    ylabel('Control gains $$K$$','Interpreter','latex','FontSize',20)
+    legend('k1','k2');
     grid on
 
     figure

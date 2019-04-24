@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Problem Set 3 Question 3</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-04-21"><meta name="DC.source" content="Q3solveRiccatti.m"><style type="text/css">
+      --><title>Problem Set 3 Question 3</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-04-24"><meta name="DC.source" content="Q3solveRiccatti.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -101,9 +101,11 @@ V_final = Qf(:);
 
     uStar = zeros(size(revV,1),1);
     x = zeros(2,size(revV,1));
+    K = zeros(2,size(revV,1));
     x(:,1) = [1;1];
     <span class="keyword">for</span> i = 1: size(revV,1)
-        uStar(i) = -(R\(B.'))*revV{i}*x(:,i);
+        K(:,i) = -(R\(B.'))*revV{i};
+        uStar(i) = K(:,i)'*x(:,i);
         <span class="keyword">if</span> i ~= size(revV,1)
             dxdt = A*x(:,i) + B*uStar(i);
             x(:,i+1) = x(:,i) + dxdt * dt;
@@ -131,10 +133,11 @@ V_final = Qf(:);
     grid <span class="string">on</span>
 
     figure
-    plot(forwardTime,uStar)
-    title(<span class="string">'Control effort vs time'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20)
+    plot(forwardTime,K)
+    title(<span class="string">'Control gains vs time'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20)
     xlabel(<span class="string">'Time $$t$$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20)
-    ylabel(<span class="string">'Control effort $$u$$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20)
+    ylabel(<span class="string">'Control gains $$K$$'</span>,<span class="string">'Interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20)
+    legend(<span class="string">'k1'</span>,<span class="string">'k2'</span>);
     grid <span class="string">on</span>
 
     figure
@@ -184,9 +187,11 @@ for tf =[10,100]
 
     uStar = zeros(size(revV,1),1);
     x = zeros(2,size(revV,1));
+    K = zeros(2,size(revV,1));
     x(:,1) = [1;1];
     for i = 1: size(revV,1)
-        uStar(i) = -(R\(B.'))*revV{i}*x(:,i);
+        K(:,i) = -(R\(B.'))*revV{i};
+        uStar(i) = K(:,i)'*x(:,i);
         if i ~= size(revV,1)
             dxdt = A*x(:,i) + B*uStar(i);
             x(:,i+1) = x(:,i) + dxdt * dt;
@@ -214,10 +219,11 @@ for tf =[10,100]
     grid on
     
     figure
-    plot(forwardTime,uStar)
-    title('Control effort vs time','Interpreter','latex','FontSize',20)
+    plot(forwardTime,K)
+    title('Control gains vs time','Interpreter','latex','FontSize',20)
     xlabel('Time $$t$$','Interpreter','latex','FontSize',20)
-    ylabel('Control effort $$u$$','Interpreter','latex','FontSize',20)
+    ylabel('Control gains $$K$$','Interpreter','latex','FontSize',20)
+    legend('k1','k2');
     grid on
 
     figure

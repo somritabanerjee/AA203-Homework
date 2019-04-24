@@ -78,5 +78,5 @@ visSetIm(g, data(:,:,:,ind));
 
 % Section for J(t=-0)
 figure;
-ind = find(tau==10);
+ind = find(tau==0);
 visSetIm(g, data(:,:,:,ind));
