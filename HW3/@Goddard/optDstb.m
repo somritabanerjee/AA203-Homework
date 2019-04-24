@@ -17,9 +17,9 @@ end
 dOpt = cell(obj.nd, 1);
 
 %% Optimal disturbance
-if strcmp(dMode, 'min')
+if strcmp(dMode, 'max')
   dOpt = (deriv{obj.dims==2}>=0)*obj.dMax + (deriv{obj.dims==2}<0)*(-obj.dMax);
-elseif strcmp(dMode, 'max')
+elseif strcmp(dMode, 'min')
   dOpt = (deriv{obj.dims==2}>=0)*(-obj.dMax) + (deriv{obj.dims==2}<0)*obj.dMax;
 else
   error('Unknown uMode!')
