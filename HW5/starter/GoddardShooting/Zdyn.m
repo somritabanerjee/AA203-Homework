@@ -12,8 +12,20 @@ py = z(4);
 pv = z(5);
 pm = z(6);
 
-phi = % TODO compute phi
+% Compute phi
+phi = pv/m - pm*b;
+% Use phi to compute control action
+if phi > 0
+    uStar = 0;
+else
+    uStar = uMax;
+end
+% Rocket dynamics and adjoint equations
+yDot = v;
+vDot = uStar/m - g;
+mDot = -b*uStar;
+pyDot = 0;
+pvDot = -py;
+pmDot = pv*uStar/(m^2);
 
-% TODO use phi to compute control action
-
-zdot = % TODO Rocket dynamics and adjoint equations
+zdot = [yDot; vDot; mDot; pyDot; pvDot; pmDot];

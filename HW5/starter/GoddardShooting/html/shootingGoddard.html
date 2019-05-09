@@ -1,0 +1,278 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>shootingGoddard</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-05-08"><meta name="DC.source" content="shootingGoddard.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">% Solving Goddard's problem via shooting method.</span>
+<span class="comment">% From the homework, we know that Goddard's problem is solved</span>
+<span class="comment">% with switching time tSw = (m0 - mf)/(b*uMax). We want to</span>
+<span class="comment">% discover what is the optimal final time tf that maximizes</span>
+<span class="comment">% the final height h(tf). For this, we implement a shooting</span>
+<span class="comment">% method exactly as seen in the last lecture.</span>
+
+clear <span class="string">all</span>; clf; clc; format <span class="string">long</span>;
+
+<span class="keyword">global</span> g; g = 9.81;
+<span class="keyword">global</span> b;
+<span class="keyword">global</span> uMax;
+<span class="keyword">global</span> h0; h0 = 0.;
+<span class="keyword">global</span> v0; v0 = 0.;
+<span class="keyword">global</span> m0;
+<span class="keyword">global</span> mf;
+
+<span class="comment">% Scenario: recall that we must satisfy uMax &gt; m0*g</span>
+m0 = 12000; mf = 1000;
+b = 1e-3; uMax = 1.2e5;
+
+<span class="comment">% Initial guess for [tf,ph(0),pv(0),pm(0)], see also the homework.</span>
+<span class="comment">% A good inital guess is crucial to make the shooting method converge.</span>
+<span class="comment">% From the homework we know that phy(0) = -1 and pv(t) = t - tf. Then</span>
+<span class="comment">% pv(0) = -tf. For a guess for pm(0), the computations done in the</span>
+<span class="comment">% homework give: pm(0) = -(tf*(uMax/m0 - g) + v0)/(b*uMax).</span>
+<span class="comment">% The only guess will be on tf</span>
+tf = 253.302; <span class="comment">% Time guessed from the script on dichotomic search</span>
+tSw = (m0 - mf)/(b*uMax);
+<span class="keyword">if</span> tSw &gt; tf
+    tSw = tf;
+<span class="keyword">end</span>
+py0 = -1.;
+pv0 = -tf;
+pm0 = -(tf*(uMax/m0 - g) + v0)/(b*uMax);
+X0Guess = [tf;py0;pv0;pm0];
+
+options=optimset(<span class="string">'Display'</span>,<span class="string">'iter'</span>,<span class="string">'LargeScale'</span>,<span class="string">'on'</span>,<span class="string">'TolX'</span>,1e-6,<span class="string">'MaxIter'</span>,100,<span class="string">'MaxFunEvals'</span>,100);
+[X0,FVAL,EXITFLAG]=fsolve(@shootingFunc,X0Guess,options); <span class="comment">% Solving F(tf,py(0),pv(0),pm(0))=0</span>
+EXITFLAG <span class="comment">% 1 or 2 if convergence is achieved</span>
+
+<span class="comment">% Plotting</span>
+tf = X0(1);
+fprintf(<span class="string">'Switching time tSw = %f\n'</span>,tSw);
+fprintf(<span class="string">'Final time tf = %f\n'</span>,tf);
+options = odeset(<span class="string">'AbsTol'</span>,1e-9,<span class="string">'RelTol'</span>,1e-9);
+[t,x] = ode113(@(t,x) Zdyn(t,x), [0 tf], [h0;v0;m0;X0(2);X0(3);X0(4)], options);
+subplot(221); plot(t,x(:,1),<span class="string">'linewidth'</span>,3) ;
+title(<span class="string">'\textbf{a) Height}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,22,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+xlabel(<span class="string">'\boldmath{$t$} \ \textbf{(s)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+ylabel(<span class="string">'\boldmath{$h$} \ \textbf{(m)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+xlim([-inf inf]);
+ylim([-inf inf]);
+grid <span class="string">on</span>;
+subplot(222); plot(t,x(:,2),<span class="string">'linewidth'</span>,3) ;
+title(<span class="string">'\textbf{b) Velocity}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,22,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+xlabel(<span class="string">'\boldmath{$t$} \ \textbf{(s)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+ylabel(<span class="string">'\boldmath{$v$} \ \textbf{(m/s)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+xlim([-inf inf]);
+ylim([-inf inf]);
+grid <span class="string">on</span>;
+subplot(223); plot(t,x(:,3),<span class="string">'linewidth'</span>,3) ;
+title(<span class="string">'\textbf{c) Mass}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,22,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+xlabel(<span class="string">'\boldmath{$t$} \ \textbf{(s)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+ylabel(<span class="string">'\boldmath{$m$} \ \textbf{(kg)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+xlim([-inf inf]);
+ylim([-inf inf]);
+grid <span class="string">on</span>;
+control = zeros(size(t));
+<span class="keyword">for</span> i = 1:size(t)
+    phi = x(i,5)/x(i,3) - x(i,6)*b; <span class="comment">% Phi function</span>
+    <span class="keyword">if</span> phi &lt; 0 <span class="comment">% Optimal control from our optimal policy</span>
+        control(i) = uMax;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+subplot(224); plot(t,control,<span class="string">'linewidth'</span>,3);
+title(<span class="string">'\textbf{d) Optimal Control}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,22,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+xlabel(<span class="string">'\boldmath{$t$} \ \textbf{(s)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+ylabel(<span class="string">'\boldmath{$u$}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+xlim([-inf inf]);
+ylim([-inf inf]);
+grid <span class="string">on</span>;
+</pre><pre class="codeoutput">
+                                         Norm of      First-order   Trust-region
+ Iteration  Func-count     f(x)          step         optimality    radius
+     0          5     0.000198371                          33.5               1
+     1         10     2.89571e-08     0.00202262          0.289               1
+     2         15     3.77863e-09    1.34771e-06         0.0905               1
+     3         16     3.77863e-09     0.00488286         0.0905               1
+     4         17     3.77863e-09     0.00122072         0.0905         0.00122
+     5         18     3.77863e-09    0.000305179         0.0905        0.000305
+     6         19     3.77863e-09    7.62947e-05         0.0905        7.63e-05
+     7         20     3.77863e-09    1.90737e-05         0.0905        1.91e-05
+     8         21     3.77863e-09    4.76842e-06         0.0905        4.77e-06
+     9         22     3.77863e-09    1.19211e-06         0.0905        1.19e-06
+    10         23     3.77863e-09    2.98026e-07         0.0905        2.98e-07
+    11         28     2.62575e-09    7.45066e-08         0.0125        7.45e-08
+    12         33     1.68146e-09    7.45066e-08         0.0037        7.45e-08
+    13         38     3.55833e-10    1.86266e-07         0.0134        1.86e-07
+    14         43     1.31491e-11    1.76786e-07        0.00639        4.66e-07
+    15         48     4.15071e-13    2.33601e-08        0.00116        4.66e-07
+    16         49     4.15071e-13    4.15036e-09        0.00116        4.66e-07
+    17         50     4.15071e-13    1.03759e-09        0.00116        1.04e-09
+    18         51     4.15071e-13    2.59397e-10        0.00116        2.59e-10
+    19         52     4.15071e-13    6.48493e-11        0.00116        6.48e-11
+    20         53     4.15071e-13    1.62123e-11        0.00116        1.62e-11
+    21         54     4.15071e-13    4.05308e-12        0.00116        4.05e-12
+    22         55     4.15071e-13    1.01327e-12        0.00116        1.01e-12
+
+Equation solved, fsolve stalled.
+
+fsolve stopped because the relative size of the current step is less than the
+selected value of the step size tolerance squared and the vector of function values
+is near zero as measured by the default value of the function tolerance.
+
+
+
+
+EXITFLAG =
+
+     2
+
+Switching time tSw = 91.666667
+Final time tf = 253.303430
+</pre><img vspace="5" hspace="5" src="shootingGoddard_01.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% Solving Goddard's problem via shooting method.
+% From the homework, we know that Goddard's problem is solved
+% with switching time tSw = (m0 - mf)/(b*uMax). We want to
+% discover what is the optimal final time tf that maximizes
+% the final height h(tf). For this, we implement a shooting
+% method exactly as seen in the last lecture.
+
+clear all; clf; clc; format long;
+
+global g; g = 9.81;
+global b;
+global uMax;
+global h0; h0 = 0.;
+global v0; v0 = 0.;
+global m0;
+global mf;
+
+% Scenario: recall that we must satisfy uMax > m0*g
+m0 = 12000; mf = 1000;
+b = 1e-3; uMax = 1.2e5;
+
+% Initial guess for [tf,ph(0),pv(0),pm(0)], see also the homework.
+% A good inital guess is crucial to make the shooting method converge.
+% From the homework we know that phy(0) = -1 and pv(t) = t - tf. Then
+% pv(0) = -tf. For a guess for pm(0), the computations done in the
+% homework give: pm(0) = -(tf*(uMax/m0 - g) + v0)/(b*uMax).
+% The only guess will be on tf
+tf = 253.302; % Time guessed from the script on dichotomic search
+tSw = (m0 - mf)/(b*uMax);
+if tSw > tf
+    tSw = tf;
+end
+py0 = -1.;
+pv0 = -tf;
+pm0 = -(tf*(uMax/m0 - g) + v0)/(b*uMax);
+X0Guess = [tf;py0;pv0;pm0];
+
+options=optimset('Display','iter','LargeScale','on','TolX',1e-6,'MaxIter',100,'MaxFunEvals',100);
+[X0,FVAL,EXITFLAG]=fsolve(@shootingFunc,X0Guess,options); % Solving F(tf,py(0),pv(0),pm(0))=0
+EXITFLAG % 1 or 2 if convergence is achieved
+
+% Plotting
+tf = X0(1);
+fprintf('Switching time tSw = %f\n',tSw);
+fprintf('Final time tf = %f\n',tf);
+options = odeset('AbsTol',1e-9,'RelTol',1e-9);
+[t,x] = ode113(@(t,x) Zdyn(t,x), [0 tf], [h0;v0;m0;X0(2);X0(3);X0(4)], options);
+subplot(221); plot(t,x(:,1),'linewidth',3) ;
+title('\textbf{a) Height}','interpreter','latex','FontSize',22,'FontWeight','bold');
+xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+ylabel('\boldmath{$h$} \ \textbf{(m)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+xlim([-inf inf]);
+ylim([-inf inf]);
+grid on;
+subplot(222); plot(t,x(:,2),'linewidth',3) ;
+title('\textbf{b) Velocity}','interpreter','latex','FontSize',22,'FontWeight','bold');
+xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+ylabel('\boldmath{$v$} \ \textbf{(m/s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+xlim([-inf inf]);
+ylim([-inf inf]);
+grid on;
+subplot(223); plot(t,x(:,3),'linewidth',3) ;
+title('\textbf{c) Mass}','interpreter','latex','FontSize',22,'FontWeight','bold');
+xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+ylabel('\boldmath{$m$} \ \textbf{(kg)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+xlim([-inf inf]);
+ylim([-inf inf]);
+grid on;
+control = zeros(size(t));
+for i = 1:size(t)
+    phi = x(i,5)/x(i,3) - x(i,6)*b; % Phi function
+    if phi < 0 % Optimal control from our optimal policy
+        control(i) = uMax;
+    end
+end
+subplot(224); plot(t,control,'linewidth',3);
+title('\textbf{d) Optimal Control}','interpreter','latex','FontSize',22,'FontWeight','bold');
+xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+ylabel('\boldmath{$u$}','interpreter','latex','FontSize',20,'FontWeight','bold');
+xlim([-inf inf]);
+ylim([-inf inf]);
+grid on;
+##### SOURCE END #####
+--></body></html>

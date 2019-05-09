@@ -25,7 +25,7 @@ b = 1e-3; uMax = 1.2e5;
 % pv(0) = -tf. For a guess for pm(0), the computations done in the
 % homework give: pm(0) = -(tf*(uMax/m0 - g) + v0)/(b*uMax).
 % The only guess will be on tf
-tf = 253.302; % Time guessed from the script on dichotomic search
+tf = 270; % Time guessed from the script on dichotomic search
 tSw = (m0 - mf)/(b*uMax);
 if tSw > tf
     tSw = tf;

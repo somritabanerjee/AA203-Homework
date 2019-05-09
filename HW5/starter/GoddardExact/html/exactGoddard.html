@@ -1,0 +1,289 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>exactGoddard</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-05-08"><meta name="DC.source" content="exactGoddard.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">% Exaclty solving Goddard's problem.</span>
+<span class="comment">% From the homework, we know that Goddard's problem is solved</span>
+<span class="comment">% with switching time tSw = (m0 - mf)/(b*uMax). We want to</span>
+<span class="comment">% discover what is the optimal final time tf that maximizes</span>
+<span class="comment">% the final height h(tf). For this, we implement a dichotomic</span>
+<span class="comment">% search on tf with the following idea: the final time tf</span>
+<span class="comment">% that maximizes h(tf) is the time for which the time derivative</span>
+<span class="comment">% of h(t) at tf is zero, i.e., 0 = h'(tf) = v(tf). Then, we</span>
+<span class="comment">% seek tf as the zero for v(tf), where the velocity v arises</span>
+<span class="comment">% from integrating the rocket dynamics with the optimal control</span>
+<span class="comment">% given in the homework, i.e., u(t) = uMax if t &lt;= tSw and</span>
+<span class="comment">% u(t) = 0 otherwise.</span>
+
+clear <span class="string">all</span>; clf; clc; format <span class="string">long</span>;
+
+<span class="keyword">global</span> g; g = 9.81;
+<span class="keyword">global</span> b;
+<span class="keyword">global</span> uMax;
+<span class="keyword">global</span> h0; h0 = 0.;
+<span class="keyword">global</span> v0; v0 = 0.;
+<span class="keyword">global</span> m0;
+<span class="keyword">global</span> mf;
+
+<span class="comment">% Scenario: recall that we must satisfy uMax &gt; m0*g</span>
+m0 = 12000; mf = 1000;
+b = 1e-3; uMax = 1.2e5;
+
+<span class="comment">% Parameters for the dichotomic search.</span>
+<span class="comment">% For given initial times tA, tB such that v(tA) &gt; 0, v(tB) &lt; 0,</span>
+<span class="comment">% we iteratively evaluate v at tMed = (tA + tB)/2 until we find</span>
+<span class="comment">% v(tMed) = 0. Therefore: tf = tMed.</span>
+tA = 1.;
+tB = 500.;
+dichotomyFuncTA = dichotomyFunc(tA);
+dichotomyFuncTB = dichotomyFunc(tB);
+tMed = (tA + tB)/2.;
+dichotomyFuncTMed = dichotomyFunc(tMed);
+iterDichotomy = 1;
+iterDichotomyMax = 1000;
+epsDichotomy = 1e-1;
+
+<span class="keyword">if</span> dichotomyFuncTA &lt; 0 || dichotomyFuncTB &gt; 0
+    fprintf(<span class="string">'Wrong guess times tA and tB! Choose them such that: v(tA) &gt; 0 and v(tB) &lt; 0...\n'</span>,iterDichotomy);
+<span class="keyword">else</span>
+    <span class="comment">% Classical dichotomic/binary/bisection search</span>
+    <span class="keyword">while</span> ( abs(dichotomyFuncTMed) &gt; epsDichotomy &amp;&amp; iterDichotomy &lt; iterDichotomyMax )
+        <span class="comment">% TODO: Implement dichotomic search. See initialization in</span>
+        <span class="comment">% lines 32-37 for reference.</span>
+        <span class="keyword">if</span> dichotomyFuncTMed &gt; 0 <span class="comment">% search between tMed and tB</span>
+           tA = tMed;
+        <span class="keyword">else</span> <span class="comment">% search between tA and tMed</span>
+           tB = tMed;
+        <span class="keyword">end</span>
+        dichotomyFuncTA = dichotomyFunc(tA);
+        dichotomyFuncTB = dichotomyFunc(tB);
+        tMed = (tA + tB)/2.;
+        dichotomyFuncTMed = dichotomyFunc(tMed);
+        iterDichotomy = iterDichotomy + 1;
+    <span class="keyword">end</span>
+    tf = tMed;
+
+    <span class="comment">% Optimal switching time.</span>
+    tSw = (m0 - mf)/(b*uMax);
+    <span class="keyword">if</span> tSw &gt; tf <span class="comment">% Verifying that: 0 &lt; tSw &lt;= tf</span>
+        tSw = tf;
+    <span class="keyword">end</span>
+
+    <span class="comment">% Plotting</span>
+    fprintf(<span class="string">'Switching time tSw = %f\n'</span>,tSw);
+    fprintf(<span class="string">'Final time tf = %f\n'</span>,tf);
+    options = odeset(<span class="string">'AbsTol'</span>,1e-9,<span class="string">'RelTol'</span>,1e-9);
+    [t,x] = ode113(@(t,x) Xdyn(t,x,tf), [0 tf], [h0;v0;m0], options);
+    subplot(221); plot(t,x(:,1),<span class="string">'linewidth'</span>,3);
+    title(<span class="string">'\textbf{a) Height}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,22,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    xlabel(<span class="string">'\boldmath{$t$} \ \textbf{(s)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    ylabel(<span class="string">'\boldmath{$h$} \ \textbf{(m)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    xlim([-inf inf]);
+    ylim([-inf inf]);
+    grid <span class="string">on</span>;
+    subplot(222); plot(t,x(:,2),<span class="string">'linewidth'</span>,3) ;
+    title(<span class="string">'\textbf{b) Velocity}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,22,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    xlabel(<span class="string">'\boldmath{$t$} \ \textbf{(s)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    ylabel(<span class="string">'\boldmath{$v$} \ \textbf{(m/s)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    xlim([-inf inf]);
+    ylim([-inf inf]);
+    grid <span class="string">on</span>;
+    subplot(223); plot(t,x(:,3),<span class="string">'linewidth'</span>,3) ;
+    title(<span class="string">'\textbf{c) Mass}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,22,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    xlabel(<span class="string">'\boldmath{$t$} \ \textbf{(s)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    ylabel(<span class="string">'\boldmath{$m$} \ \textbf{(kg)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    xlim([-inf inf]);
+    ylim([-inf inf]);
+    grid <span class="string">on</span>;
+    control = zeros(size(t));
+    <span class="keyword">for</span> i = 1:size(t)
+        <span class="keyword">if</span> t(i) &lt;= tSw <span class="comment">% Optimal control from our optimal policy</span>
+            control(i) = uMax;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    subplot(224); plot(t,control,<span class="string">'linewidth'</span>,3);
+    title(<span class="string">'\textbf{d) Optimal Control}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,22,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    xlabel(<span class="string">'\boldmath{$t$} \ \textbf{(s)}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    ylabel(<span class="string">'\boldmath{$u$}'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>,<span class="string">'FontSize'</span>,20,<span class="string">'FontWeight'</span>,<span class="string">'bold'</span>);
+    xlim([-inf inf]);
+    ylim([-inf inf]);
+    grid <span class="string">on</span>;
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Switching time tSw = 91.666667
+Final time tf = 253.302002
+</pre><img vspace="5" hspace="5" src="exactGoddard_01.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% Exaclty solving Goddard's problem.
+% From the homework, we know that Goddard's problem is solved
+% with switching time tSw = (m0 - mf)/(b*uMax). We want to
+% discover what is the optimal final time tf that maximizes
+% the final height h(tf). For this, we implement a dichotomic
+% search on tf with the following idea: the final time tf
+% that maximizes h(tf) is the time for which the time derivative
+% of h(t) at tf is zero, i.e., 0 = h'(tf) = v(tf). Then, we
+% seek tf as the zero for v(tf), where the velocity v arises
+% from integrating the rocket dynamics with the optimal control
+% given in the homework, i.e., u(t) = uMax if t <= tSw and
+% u(t) = 0 otherwise.
+
+clear all; clf; clc; format long;
+
+global g; g = 9.81;
+global b;
+global uMax;
+global h0; h0 = 0.;
+global v0; v0 = 0.;
+global m0;
+global mf;
+
+% Scenario: recall that we must satisfy uMax > m0*g
+m0 = 12000; mf = 1000;
+b = 1e-3; uMax = 1.2e5;
+
+% Parameters for the dichotomic search.
+% For given initial times tA, tB such that v(tA) > 0, v(tB) < 0,
+% we iteratively evaluate v at tMed = (tA + tB)/2 until we find
+% v(tMed) = 0. Therefore: tf = tMed.
+tA = 1.;
+tB = 500.;
+dichotomyFuncTA = dichotomyFunc(tA);
+dichotomyFuncTB = dichotomyFunc(tB);
+tMed = (tA + tB)/2.;
+dichotomyFuncTMed = dichotomyFunc(tMed);
+iterDichotomy = 1;
+iterDichotomyMax = 1000;
+epsDichotomy = 1e-1;
+
+if dichotomyFuncTA < 0 || dichotomyFuncTB > 0
+    fprintf('Wrong guess times tA and tB! Choose them such that: v(tA) > 0 and v(tB) < 0...\n',iterDichotomy);
+else
+    % Classical dichotomic/binary/bisection search
+    while ( abs(dichotomyFuncTMed) > epsDichotomy && iterDichotomy < iterDichotomyMax )
+        % TODO: Implement dichotomic search. See initialization in 
+        % lines 32-37 for reference. 
+        if dichotomyFuncTMed > 0 % search between tMed and tB 
+           tA = tMed;
+        else % search between tA and tMed
+           tB = tMed;
+        end
+        dichotomyFuncTA = dichotomyFunc(tA);
+        dichotomyFuncTB = dichotomyFunc(tB);
+        tMed = (tA + tB)/2.;
+        dichotomyFuncTMed = dichotomyFunc(tMed);
+        iterDichotomy = iterDichotomy + 1;
+    end
+    tf = tMed;
+
+    % Optimal switching time.
+    tSw = (m0 - mf)/(b*uMax);
+    if tSw > tf % Verifying that: 0 < tSw <= tf
+        tSw = tf;
+    end
+
+    % Plotting
+    fprintf('Switching time tSw = %f\n',tSw);
+    fprintf('Final time tf = %f\n',tf);
+    options = odeset('AbsTol',1e-9,'RelTol',1e-9);
+    [t,x] = ode113(@(t,x) Xdyn(t,x,tf), [0 tf], [h0;v0;m0], options);
+    subplot(221); plot(t,x(:,1),'linewidth',3);
+    title('\textbf{a) Height}','interpreter','latex','FontSize',22,'FontWeight','bold');
+    xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+    ylabel('\boldmath{$h$} \ \textbf{(m)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+    xlim([-inf inf]);
+    ylim([-inf inf]);
+    grid on;
+    subplot(222); plot(t,x(:,2),'linewidth',3) ;
+    title('\textbf{b) Velocity}','interpreter','latex','FontSize',22,'FontWeight','bold');
+    xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+    ylabel('\boldmath{$v$} \ \textbf{(m/s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+    xlim([-inf inf]);
+    ylim([-inf inf]);
+    grid on;
+    subplot(223); plot(t,x(:,3),'linewidth',3) ;
+    title('\textbf{c) Mass}','interpreter','latex','FontSize',22,'FontWeight','bold');
+    xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+    ylabel('\boldmath{$m$} \ \textbf{(kg)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+    xlim([-inf inf]);
+    ylim([-inf inf]);
+    grid on;
+    control = zeros(size(t));
+    for i = 1:size(t)
+        if t(i) <= tSw % Optimal control from our optimal policy
+            control(i) = uMax;
+        end
+    end
+    subplot(224); plot(t,control,'linewidth',3);
+    title('\textbf{d) Optimal Control}','interpreter','latex','FontSize',22,'FontWeight','bold');
+    xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+    ylabel('\boldmath{$u$}','interpreter','latex','FontSize',20,'FontWeight','bold');
+    xlim([-inf inf]);
+    ylim([-inf inf]);
+    grid on;
+end
+
+##### SOURCE END #####
+--></body></html>
