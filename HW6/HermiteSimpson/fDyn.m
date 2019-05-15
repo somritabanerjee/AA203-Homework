@@ -9,6 +9,6 @@ g = gFunc(y);
 rho = normRhoFunc(y);
 
 % Put here the dynamics
-yDyn = ;
-vDyn = ;
-mDyn = ;
+yDyn = v;
+vDyn = u/m - g - (D/m)*rho*v^2;
+mDyn = -b*u;

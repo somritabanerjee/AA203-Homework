@@ -1,0 +1,247 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>collocation</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-05-15"><meta name="DC.source" content="collocation.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">% Problem (OCP)_1 from Pset 6</span>
+
+clear <span class="string">all</span>; clf; clc; format <span class="string">long</span>;
+
+<span class="comment">% Parameters and scenario</span>
+<span class="keyword">global</span> N; N = 10;
+<span class="keyword">global</span> T; T = 1.;
+<span class="keyword">global</span> uMax; uMax = 1.0;
+<span class="keyword">global</span> x0; x0 = 1.;
+<span class="keyword">global</span> y0; y0 = 0.;
+
+<span class="comment">% Random initialization</span>
+uInit = 0.5*uMax*ones(N+1,1);
+xInit = ones(N+1,1); yInit = zeros(N+1,1);
+varInit = [xInit; yInit; uInit];
+
+<span class="comment">% Lower and upper bounds.</span>
+lb = zeros(3*N+3,1); ub = uMax*ones(3*N+3,1); <span class="comment">% For the control: 0 \le u \le uMax</span>
+ub(1:N+1) = 1.; <span class="comment">% For the state x : 0 \le x \le 1</span>
+ub(N+2:2*N+2) = 1.; <span class="comment">% For the state y : 0 \le y \le 1</span>
+
+<span class="comment">% Solving the problme via fmincon</span>
+options=optimoptions(<span class="string">'fmincon'</span>,<span class="string">'Display'</span>,<span class="string">'iter'</span>,<span class="string">'Algorithm'</span>,<span class="string">'sqp'</span>,<span class="string">'MaxFunEvals'</span>,100000,<span class="string">'MaxIter'</span>,10000);
+<span class="comment">% options=optimoptions('fmincon','Display','iter','Algorithm','sqp','MaxFunctionEvaluations',100000,'MaxIterations',10000);</span>
+[var,Fval,convergence] = fmincon(@cost,varInit,[],[],[],[],lb,ub,@constraint,options); <span class="comment">% Solving the problem</span>
+convergence <span class="comment">% = 1, good</span>
+
+<span class="comment">% Collecting the solution. Note that var = [x;y;u]</span>
+x = var(1:N+1); y = var(N+2:2*N+2); u = var(2*N+3:3*N+3);
+tState = zeros(N+1,1);
+t = zeros(N+1,1);
+<span class="keyword">for</span> i = 1:N
+    t(i+1) = t(i) + (1.0*T/(1.0*N));
+<span class="keyword">end</span>
+
+<span class="comment">% Plotting</span>
+fprintf(<span class="string">'Optimal Final Quantity for the Second Substance = %f\n\n'</span>,Fval);
+<span class="comment">% subplot(131); plot(t,x,'linewidth',3);</span>
+<span class="comment">% title('\textbf{a) First Substance}','interpreter','latex','FontSize',22,'FontWeight','bold');</span>
+<span class="comment">% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% ylabel('\boldmath{$x$} \ \textbf{(\%)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% xlim([-inf inf]);</span>
+<span class="comment">% ylim([-inf inf]);</span>
+<span class="comment">% grid on;</span>
+<span class="comment">% subplot(132); plot(t,y,'linewidth',3) ;</span>
+<span class="comment">% title('\textbf{b) Second Substance}','interpreter','latex','FontSize',22,'FontWeight','bold');</span>
+<span class="comment">% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% ylabel('\boldmath{$y$} \ \textbf{(\%)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% xlim([-inf inf]);</span>
+<span class="comment">% ylim([-inf inf]);</span>
+<span class="comment">% grid on;</span>
+<span class="comment">% subplot(133); plot(t,u,'linewidth',3);</span>
+<span class="comment">% title('\textbf{c) Optimal Control}','interpreter','latex','FontSize',22,'FontWeight','bold');</span>
+<span class="comment">% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% ylabel('\boldmath{$u$}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% xlim([-inf inf]);</span>
+<span class="comment">% ylim([-inf inf]);</span>
+<span class="comment">% grid on;</span>
+</pre><pre class="codeoutput">                                                          Norm of First-order
+ Iter F-count            f(x) Feasibility  Steplength        step  optimality
+    0      34   -0.000000e+00   5.000e-02                           1.000e+00
+    1      68   -2.355430e-01   6.015e-03   1.000e+00   8.404e-01   2.996e-01
+    2     102   -2.595025e-01   1.487e-04   1.000e+00   9.635e-02   2.447e-02
+    3     136   -2.691728e-01   4.202e-04   1.000e+00   1.658e-01   2.300e-02
+    4     171   -2.802969e-01   2.296e-04   1.000e+00   4.903e-01   1.343e-02
+    5     205   -2.814745e-01   9.095e-05   1.000e+00   7.340e-02   1.337e-02
+    6     239   -2.848175e-01   6.548e-04   1.000e+00   1.986e-01   1.322e-02
+    7     273   -2.865277e-01   2.701e-04   1.000e+00   1.551e-01   1.946e-02
+    8     307   -2.875543e-01   2.145e-04   1.000e+00   1.164e-01   9.424e-03
+    9     341   -2.873440e-01   5.010e-05   1.000e+00   5.320e-02   7.636e-03
+   10     375   -2.877465e-01   4.403e-05   1.000e+00   5.583e-02   7.914e-03
+   11     409   -2.887661e-01   9.233e-05   1.000e+00   1.204e-01   1.138e-02
+   12     443   -2.893493e-01   1.236e-04   1.000e+00   1.105e-01   1.082e-02
+   13     477   -2.894912e-01   2.966e-05   1.000e+00   3.790e-02   7.160e-03
+   14     511   -2.896184e-01   2.723e-05   1.000e+00   3.681e-02   3.220e-03
+   15     545   -2.896203e-01   5.757e-06   1.000e+00   1.866e-02   2.536e-03
+   16     579   -2.896686e-01   7.119e-06   1.000e+00   1.912e-02   2.495e-03
+   17     613   -2.896967e-01   9.225e-06   1.000e+00   2.050e-02   1.997e-03
+   18     647   -2.896969e-01   4.026e-06   1.000e+00   1.278e-02   1.219e-03
+   19     681   -2.896988e-01   9.327e-07   1.000e+00   7.252e-03   1.153e-03
+   20     715   -2.897080e-01   1.363e-06   1.000e+00   1.031e-02   1.593e-03
+   21     749   -2.897188e-01   2.664e-06   1.000e+00   1.341e-02   1.973e-03
+   22     783   -2.897193e-01   4.064e-07   1.000e+00   4.369e-03   1.452e-03
+   23     817   -2.897202e-01   3.408e-07   1.000e+00   4.207e-03   2.091e-04
+   24     851   -2.897196e-01   1.149e-08   1.000e+00   7.273e-04   1.729e-04
+   25     885   -2.897203e-01   1.137e-07   1.000e+00   2.768e-03   3.421e-04
+   26     919   -2.897203e-01   4.886e-08   1.000e+00   1.673e-03   2.749e-04
+   27     953   -2.897203e-01   2.363e-08   1.000e+00   1.112e-03   1.060e-04
+   28     987   -2.897203e-01   1.187e-09   1.000e+00   2.958e-04   3.901e-05
+   29    1021   -2.897203e-01   9.043e-10   1.000e+00   2.835e-04   4.250e-05
+   30    1055   -2.897203e-01   1.477e-09   1.000e+00   3.157e-04   4.239e-05
+
+                                                          Norm of First-order
+ Iter F-count            f(x) Feasibility  Steplength        step  optimality
+   31    1089   -2.897203e-01   1.560e-09   1.000e+00   2.744e-04   3.140e-05
+   32    1123   -2.897203e-01   4.151e-10   1.000e+00   1.342e-04   1.208e-05
+   33    1157   -2.897203e-01   3.489e-11   1.000e+00   4.701e-05   6.886e-06
+   34    1191   -2.897203e-01   3.684e-11   1.000e+00   4.258e-05   5.896e-06
+   35    1225   -2.897203e-01   3.106e-11   1.000e+00   4.442e-05   5.937e-06
+   36    1259   -2.897203e-01   1.542e-11   1.000e+00   3.203e-05   2.789e-06
+   37    1293   -2.897203e-01   2.077e-12   1.000e+00   1.215e-05   9.103e-07
+
+Local minimum found that satisfies the constraints.
+
+Optimization completed because the objective function is non-decreasing in 
+feasible directions, to within the default value of the function tolerance,
+and constraints are satisfied to within the default value of the constraint tolerance.
+
+
+
+
+convergence =
+
+     1
+
+Optimal Final Quantity for the Second Substance = -0.289720
+
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% Problem (OCP)_1 from Pset 6
+
+clear all; clf; clc; format long;
+
+% Parameters and scenario
+global N; N = 10;
+global T; T = 1.;
+global uMax; uMax = 1.0;
+global x0; x0 = 1.;
+global y0; y0 = 0.;
+
+% Random initialization
+uInit = 0.5*uMax*ones(N+1,1);
+xInit = ones(N+1,1); yInit = zeros(N+1,1);
+varInit = [xInit; yInit; uInit];
+
+% Lower and upper bounds.
+lb = zeros(3*N+3,1); ub = uMax*ones(3*N+3,1); % For the control: 0 \le u \le uMax
+ub(1:N+1) = 1.; % For the state x : 0 \le x \le 1
+ub(N+2:2*N+2) = 1.; % For the state y : 0 \le y \le 1
+
+% Solving the problme via fmincon
+options=optimoptions('fmincon','Display','iter','Algorithm','sqp','MaxFunEvals',100000,'MaxIter',10000);
+% options=optimoptions('fmincon','Display','iter','Algorithm','sqp','MaxFunctionEvaluations',100000,'MaxIterations',10000);
+[var,Fval,convergence] = fmincon(@cost,varInit,[],[],[],[],lb,ub,@constraint,options); % Solving the problem
+convergence % = 1, good
+
+% Collecting the solution. Note that var = [x;y;u]
+x = var(1:N+1); y = var(N+2:2*N+2); u = var(2*N+3:3*N+3);
+tState = zeros(N+1,1);
+t = zeros(N+1,1);
+for i = 1:N
+    t(i+1) = t(i) + (1.0*T/(1.0*N));
+end
+
+% Plotting
+fprintf('Optimal Final Quantity for the Second Substance = %f\n\n',Fval);
+% subplot(131); plot(t,x,'linewidth',3);
+% title('\textbf{a) First Substance}','interpreter','latex','FontSize',22,'FontWeight','bold');
+% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% ylabel('\boldmath{$x$} \ \textbf{(\%)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% xlim([-inf inf]);
+% ylim([-inf inf]);
+% grid on;
+% subplot(132); plot(t,y,'linewidth',3) ;
+% title('\textbf{b) Second Substance}','interpreter','latex','FontSize',22,'FontWeight','bold');
+% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% ylabel('\boldmath{$y$} \ \textbf{(\%)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% xlim([-inf inf]);
+% ylim([-inf inf]);
+% grid on;
+% subplot(133); plot(t,u,'linewidth',3);
+% title('\textbf{c) Optimal Control}','interpreter','latex','FontSize',22,'FontWeight','bold');
+% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% ylabel('\boldmath{$u$}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% xlim([-inf inf]);
+% ylim([-inf inf]);
+% grid on;
+##### SOURCE END #####
+--></body></html>

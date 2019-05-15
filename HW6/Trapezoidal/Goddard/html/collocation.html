@@ -1,0 +1,374 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>collocation</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-05-15"><meta name="DC.source" content="collocation.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">% Problem (OCP)_2 from Pset 6 - Trapezoidal Rule</span>
+
+clear <span class="string">all</span>; clf; clc; format <span class="string">long</span>;
+
+<span class="comment">% Parameters</span>
+<span class="keyword">global</span> N; N = 10; <span class="comment">% Choose here the number of discretization points</span>
+<span class="keyword">global</span> mu; mu = 3.9915e14;
+<span class="keyword">global</span> rE; rE = 6378145;
+<span class="keyword">global</span> h0; h0 = 7500;
+<span class="keyword">global</span> D; D = 5e-3;
+<span class="keyword">global</span> b; b = 1e-3;
+<span class="keyword">global</span> uMax; uMax = 1.2e5;
+
+<span class="comment">% Scenario</span>
+<span class="keyword">global</span> T; T = 258.;
+<span class="keyword">global</span> y0; y0 = 0.;
+<span class="keyword">global</span> v0; v0 = 0.;
+<span class="keyword">global</span> m0; m0 = 12000;
+<span class="keyword">global</span> mf; mf = 1000;
+
+<span class="comment">% Bound on the state: better conditioning the formulation (see below)</span>
+<span class="keyword">global</span> yMax; yMax = 5e6;
+<span class="keyword">global</span> vMax; vMax = 2000;
+
+<span class="comment">% Since this optimal control problem is highly nonlinear, without</span>
+<span class="comment">% an appropriate intialization direct methods unlikely converge.</span>
+<span class="comment">% In the following lines, we provide such initialization by recalling the</span>
+<span class="comment">% solution that we obtained for the simplified Goddard problem in the Pset 5.</span>
+<span class="comment">% For the height, we just select a stright-line in time connecting y0 to</span>
+<span class="comment">% 1.5e5 (which is more or less the final height that we found in Pset 5).</span>
+<span class="comment">% For the velocity, we select the average v(t) = vMax/2 in [0,tf].</span>
+<span class="comment">% For the mass, we select a straight-line in time between 0 and tSw, the</span>
+<span class="comment">% switching time computed in Pset 5 (see below).</span>
+<span class="comment">% Finally, for the control, we select the maximal value u(t) = uMax in [0,tf].</span>
+
+<span class="comment">% Finding what index NSw the time tSw corresponds to</span>
+<span class="keyword">global</span> tSw; tSw = (m0 - mf)/(b*uMax);
+h = (1.0*T/(1.0*N));
+NSw = 0; indexFound = 0; iterator = 0;
+<span class="keyword">while</span> indexFound == 0
+    <span class="comment">% If iterator*h &lt;= tSw &lt; iteartor*h + h, then we have found the index</span>
+    <span class="keyword">if</span> iterator*h &lt;= tSw &amp;&amp; tSw &lt; (iterator + 1)*h
+        NSw = iterator + 1;
+        indexFound = 1;
+    <span class="keyword">end</span>
+    iterator = iterator + 1;
+<span class="keyword">end</span>
+uInit = zeros(N+1,1);
+yInit = zeros(N+1,1);
+vInit = 0.5*vMax*ones(N+1,1);
+mInit = mf*ones(N+1,1);
+<span class="comment">% Initialization exxplained above</span>
+<span class="keyword">for</span> i=1:N+1
+    yInit(i) = y0*(1. - (i-1)*1.0/N) + 1.5e5*(i-1)*1.0/N;
+    <span class="keyword">if</span> (i-1) &lt;= NSw
+        mInit(i) = m0*(1. - (i-1)*1.0/NSw) + mf*(i-1)*1.0/NSw;
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> i&lt;= N
+        <span class="keyword">if</span> (i-1)*1.0*T/N &lt; tSw
+            uInit(i) = uMax;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="comment">% Initialization for fmincon</span>
+varInit = [yInit; vInit; mInit; uInit];
+
+<span class="comment">% Lower and upper bounds.</span>
+lb = zeros(4*N+4,1); ub = uMax*ones(4*N+4,1); <span class="comment">% For the control: 0 \le u \le uMax</span>
+ub(1:N+1) = yMax; <span class="comment">% For the state y : 0 \le y \le yMax</span>
+ub(N+2:2*N+2) = vMax; <span class="comment">% For the state v : 0 \le v \le vMax</span>
+lb(2*N+3:3*N+3) = mf; ub(2*N+3:3*N+3) = m0; <span class="comment">% For the state m : mf \le v \le m0</span>
+
+<span class="comment">% Solving the problme via fmincon</span>
+options=optimoptions(<span class="string">'fmincon'</span>,<span class="string">'Display'</span>,<span class="string">'iter'</span>,<span class="string">'Algorithm'</span>,<span class="string">'sqp'</span>,<span class="string">'MaxFunEvals'</span>,100000,<span class="string">'MaxIter'</span>,10000);
+<span class="comment">% options=optimoptions('fmincon','Display','iter','Algorithm','sqp','MaxFunctionEvaluations',100000,'MaxIterations',10000);</span>
+[var,Fval,convergence] = fmincon(@cost,varInit,[],[],[],[],lb,ub,@constraint,options); <span class="comment">% Solving the problem</span>
+convergence <span class="comment">% = 1, good</span>
+
+<span class="comment">% Collecting the solution. Note that var = [y;v;m;u]</span>
+y = var(1:N+1); v = var(N+2:2*N+2); m = var(2*N+3:3*N+3); u = var(3*N+4:4*N+4); <span class="comment">% Collecting the solution</span>
+tState = zeros(N+1,1);
+<span class="keyword">for</span> i = 1:N
+    tState(i+1) = tState(i) + (1.0*T/(1.0*N));
+<span class="keyword">end</span>
+t = zeros(N+1,1);
+<span class="keyword">for</span> i = 1:N
+    t(i+1) = t(i) + (1.0*T/(1.0*N));
+<span class="keyword">end</span>
+
+<span class="comment">% Plotting</span>
+<span class="comment">% subplot(221); plot(tState,y,'linewidth',3);</span>
+<span class="comment">% title('\textbf{a) Height}','interpreter','latex','FontSize',22,'FontWeight','bold');</span>
+<span class="comment">% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% ylabel('\boldmath{$h$} \ \textbf{(m)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% xlim([-inf inf]);</span>
+<span class="comment">% ylim([-inf inf]);</span>
+<span class="comment">% grid on;</span>
+<span class="comment">% subplot(222); plot(tState,v,'linewidth',3) ;</span>
+<span class="comment">% title('\textbf{b) Velocity}','interpreter','latex','FontSize',22,'FontWeight','bold');</span>
+<span class="comment">% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% ylabel('\boldmath{$v$} \ \textbf{(m/s)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% xlim([-inf inf]);</span>
+<span class="comment">% ylim([-inf inf]);</span>
+<span class="comment">% grid on;</span>
+<span class="comment">% subplot(223); plot(tState,m,'linewidth',3) ;</span>
+<span class="comment">% title('\textbf{c) Mass}','interpreter','latex','FontSize',22,'FontWeight','bold');</span>
+<span class="comment">% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% ylabel('\boldmath{$m$} \ \textbf{(kg)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% xlim([-inf inf]);</span>
+<span class="comment">% ylim([-inf inf]);</span>
+<span class="comment">% grid on;</span>
+<span class="comment">% subplot(224); plot(t,u,'linewidth',3);</span>
+<span class="comment">% title('\textbf{d) Optimal Control}','interpreter','latex','FontSize',22,'FontWeight','bold');</span>
+<span class="comment">% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% ylabel('\boldmath{$u$}','interpreter','latex','FontSize',20,'FontWeight','bold');</span>
+<span class="comment">% xlim([-inf inf]);</span>
+<span class="comment">% ylim([-inf inf]);</span>
+<span class="comment">% grid on;</span>
+</pre><pre class="codeoutput">                                                          Norm of First-order
+ Iter F-count            f(x) Feasibility  Steplength        step  optimality
+    0      45   -1.500000e+05   1.080e+04                           1.000e+00
+    1      90   -1.384827e+05   5.830e+01   1.000e+00   5.318e+04   3.507e+05
+    2     135   -1.326252e+05   4.886e+01   1.000e+00   4.821e+04   6.230e+05
+    3     184   -1.208418e+05   4.064e+01   2.401e-01   3.283e+04   5.892e+05
+    4     233   -1.072142e+05   2.729e+01   2.401e-01   3.749e+04   5.310e+05
+    5     282   -9.649366e+04   2.538e+01   2.401e-01   2.459e+04   3.738e+05
+    6     328   -8.902443e+04   3.157e+01   7.000e-01   2.594e+04   3.204e+05
+    7     373   -9.361575e+04   4.397e+01   1.000e+00   2.130e+04   3.407e+05
+    8     418   -9.289201e+04   4.409e+01   1.000e+00   3.876e+04   4.728e+05
+    9     466   -8.957653e+04   3.921e+01   3.430e-01   2.275e+04   3.954e+05
+   10     515   -9.373565e+04   3.889e+01   2.401e-01   2.245e+04   3.319e+05
+   11     561   -9.770138e+04   4.289e+01   7.000e-01   1.856e+04   3.615e+05
+   12     609   -9.713855e+04   4.262e+01   3.430e-01   9.719e+03   3.530e+05
+   13     661   -9.514216e+04   4.267e+01   8.235e-02   4.643e+03   3.535e+05
+   14     709   -9.883193e+04   4.299e+01   3.430e-01   9.119e+03   3.281e+05
+   15     761   -9.725194e+04   4.319e+01   8.235e-02   4.385e+03   3.355e+05
+   16     807   -9.524413e+04   4.499e+01   7.000e-01   9.705e+03   3.489e+05
+   17     852   -9.388394e+04   4.569e+01   1.000e+00   1.742e+04   3.467e+05
+   18     902   -9.459403e+04   4.555e+01   1.681e-01   3.076e+03   3.457e+05
+   19     950   -9.467867e+04   4.543e+01   3.430e-01   1.339e+04   3.392e+05
+   20    1001   -9.650441e+04   4.544e+01   1.176e-01   5.136e+03   3.433e+05
+   21    1051   -9.702869e+04   4.550e+01   1.681e-01   1.352e+03   3.412e+05
+   22    1098   -9.305588e+04   4.518e+01   4.900e-01   1.608e+04   3.603e+05
+   23    1150   -9.372642e+04   4.522e+01   8.235e-02   1.696e+03   3.560e+05
+   24    1199   -9.595231e+04   4.532e+01   2.401e-01   7.826e+03   3.468e+05
+   25    1249   -9.512951e+04   4.540e+01   1.681e-01   3.583e+03   3.482e+05
+   26    1297   -9.608476e+04   4.558e+01   3.430e-01   2.066e+03   3.455e+05
+   27    1346   -9.758559e+04   4.566e+01   2.401e-01   3.874e+03   3.376e+05
+   28    1392   -9.616562e+04   4.584e+01   7.000e-01   3.420e+03   3.452e+05
+   29    1437   -9.631947e+04   4.593e+01   1.000e+00   2.269e+03   3.450e+05
+   30    1486   -9.679116e+04   4.592e+01   2.401e-01   1.548e+03   3.424e+05
+
+                                                          Norm of First-order
+ Iter F-count            f(x) Feasibility  Steplength        step  optimality
+   31    1538   -9.665637e+04   4.591e+01   8.235e-02   8.858e+02   3.423e+05
+   32    1587   -9.647057e+04   4.591e+01   2.401e-01   8.951e+02   3.462e+05
+   33    1635   -9.567267e+04   4.592e+01   3.430e-01   2.192e+03   3.441e+05
+   34    1687   -9.592722e+04   4.592e+01   8.235e-02   6.156e+02   3.433e+05
+   35    1732   -9.629810e+04   4.593e+01   1.000e+00   2.342e+03   3.472e+05
+   36    1785   -9.665636e+04   4.593e+01   5.765e-02   1.249e+03   3.462e+05
+   37    1838   -9.664024e+04   4.593e+01   5.765e-02   5.546e+02   3.452e+05
+   38    1892   -9.664950e+04   4.592e+01   4.035e-02   7.781e+02   3.437e+05
+   39    1944   -9.650671e+04   4.592e+01   8.235e-02   4.417e+02   3.438e+05
+   40    1991   -9.637388e+04   4.593e+01   4.900e-01   1.880e+03   3.432e+05
+   41    2039   -9.664138e+04   4.593e+01   3.430e-01   1.107e+03   3.428e+05
+   42    2087   -9.641104e+04   4.593e+01   3.430e-01   8.176e+02   3.434e+05
+   43    2132   -9.659254e+04   4.594e+01   1.000e+00   7.005e+02   3.444e+05
+   44    2181   -9.675472e+04   4.594e+01   2.401e-01   4.672e+02   3.429e+05
+   45    2238   -9.674259e+04   4.594e+01   1.384e-02   3.430e+01   3.429e+05
+   46    2266   -9.674259e+04   4.594e+01   4.600e-05   4.849e-02   3.429e+05
+
+No feasible solution found.
+
+fmincon stopped because the size of the current step is less than
+the default value of the step size tolerance but constraints are not
+satisfied to within the default value of the constraint tolerance.
+
+
+
+
+convergence =
+
+    -2
+
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% Problem (OCP)_2 from Pset 6 - Trapezoidal Rule
+
+clear all; clf; clc; format long;
+
+% Parameters
+global N; N = 10; % Choose here the number of discretization points
+global mu; mu = 3.9915e14;
+global rE; rE = 6378145;
+global h0; h0 = 7500;
+global D; D = 5e-3;
+global b; b = 1e-3;
+global uMax; uMax = 1.2e5;
+
+% Scenario
+global T; T = 258.;
+global y0; y0 = 0.;
+global v0; v0 = 0.;
+global m0; m0 = 12000;
+global mf; mf = 1000;
+
+% Bound on the state: better conditioning the formulation (see below)
+global yMax; yMax = 5e6;
+global vMax; vMax = 2000;
+
+% Since this optimal control problem is highly nonlinear, without
+% an appropriate intialization direct methods unlikely converge.
+% In the following lines, we provide such initialization by recalling the 
+% solution that we obtained for the simplified Goddard problem in the Pset 5.
+% For the height, we just select a stright-line in time connecting y0 to
+% 1.5e5 (which is more or less the final height that we found in Pset 5).
+% For the velocity, we select the average v(t) = vMax/2 in [0,tf].
+% For the mass, we select a straight-line in time between 0 and tSw, the
+% switching time computed in Pset 5 (see below).
+% Finally, for the control, we select the maximal value u(t) = uMax in [0,tf].
+
+% Finding what index NSw the time tSw corresponds to
+global tSw; tSw = (m0 - mf)/(b*uMax);
+h = (1.0*T/(1.0*N));
+NSw = 0; indexFound = 0; iterator = 0;
+while indexFound == 0
+    % If iterator*h <= tSw < iteartor*h + h, then we have found the index
+    if iterator*h <= tSw && tSw < (iterator + 1)*h
+        NSw = iterator + 1;
+        indexFound = 1;
+    end
+    iterator = iterator + 1;
+end
+uInit = zeros(N+1,1);
+yInit = zeros(N+1,1);
+vInit = 0.5*vMax*ones(N+1,1);
+mInit = mf*ones(N+1,1);
+% Initialization exxplained above
+for i=1:N+1
+    yInit(i) = y0*(1. - (i-1)*1.0/N) + 1.5e5*(i-1)*1.0/N;
+    if (i-1) <= NSw
+        mInit(i) = m0*(1. - (i-1)*1.0/NSw) + mf*(i-1)*1.0/NSw;
+    end
+    if i<= N
+        if (i-1)*1.0*T/N < tSw
+            uInit(i) = uMax;
+        end
+    end
+end
+% Initialization for fmincon
+varInit = [yInit; vInit; mInit; uInit];
+
+% Lower and upper bounds.
+lb = zeros(4*N+4,1); ub = uMax*ones(4*N+4,1); % For the control: 0 \le u \le uMax
+ub(1:N+1) = yMax; % For the state y : 0 \le y \le yMax
+ub(N+2:2*N+2) = vMax; % For the state v : 0 \le v \le vMax
+lb(2*N+3:3*N+3) = mf; ub(2*N+3:3*N+3) = m0; % For the state m : mf \le v \le m0
+
+% Solving the problme via fmincon
+options=optimoptions('fmincon','Display','iter','Algorithm','sqp','MaxFunEvals',100000,'MaxIter',10000);
+% options=optimoptions('fmincon','Display','iter','Algorithm','sqp','MaxFunctionEvaluations',100000,'MaxIterations',10000);
+[var,Fval,convergence] = fmincon(@cost,varInit,[],[],[],[],lb,ub,@constraint,options); % Solving the problem
+convergence % = 1, good
+
+% Collecting the solution. Note that var = [y;v;m;u]
+y = var(1:N+1); v = var(N+2:2*N+2); m = var(2*N+3:3*N+3); u = var(3*N+4:4*N+4); % Collecting the solution
+tState = zeros(N+1,1);
+for i = 1:N
+    tState(i+1) = tState(i) + (1.0*T/(1.0*N));
+end
+t = zeros(N+1,1);
+for i = 1:N
+    t(i+1) = t(i) + (1.0*T/(1.0*N));
+end
+
+% Plotting
+% subplot(221); plot(tState,y,'linewidth',3);
+% title('\textbf{a) Height}','interpreter','latex','FontSize',22,'FontWeight','bold');
+% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% ylabel('\boldmath{$h$} \ \textbf{(m)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% xlim([-inf inf]);
+% ylim([-inf inf]);
+% grid on;
+% subplot(222); plot(tState,v,'linewidth',3) ;
+% title('\textbf{b) Velocity}','interpreter','latex','FontSize',22,'FontWeight','bold');
+% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% ylabel('\boldmath{$v$} \ \textbf{(m/s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% xlim([-inf inf]);
+% ylim([-inf inf]);
+% grid on;
+% subplot(223); plot(tState,m,'linewidth',3) ;
+% title('\textbf{c) Mass}','interpreter','latex','FontSize',22,'FontWeight','bold');
+% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% ylabel('\boldmath{$m$} \ \textbf{(kg)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% xlim([-inf inf]);
+% ylim([-inf inf]);
+% grid on;
+% subplot(224); plot(t,u,'linewidth',3);
+% title('\textbf{d) Optimal Control}','interpreter','latex','FontSize',22,'FontWeight','bold');
+% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% ylabel('\boldmath{$u$}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% xlim([-inf inf]);
+% ylim([-inf inf]);
+% grid on;
+##### SOURCE END #####
+--></body></html>

@@ -3,7 +3,7 @@
 clear all; clf; clc; format long;
 
 % Parameters
-global N; N = ; % Choose here the number of discretization points
+global N; N = 6; % Choose here the number of discretization points
 global mu; mu = 3.9915e14;
 global rE; rE = 6378145;
 global h0; h0 = 7500;
@@ -71,7 +71,8 @@ ub(N+2:2*N+2) = vMax; % For the state v : 0 \le v \le vMax
 lb(2*N+3:3*N+3) = mf; ub(2*N+3:3*N+3) = m0; % For the state m : mf \le v \le m0
 
 % Solving the problme via fmincon
-options=optimoptions('fmincon','Display','iter','Algorithm','sqp','MaxFunctionEvaluations',100000,'MaxIterations',10000);
+options=optimoptions('fmincon','Display','iter','Algorithm','sqp','MaxFunEvals',100000,'MaxIter',10000);
+% options=optimoptions('fmincon','Display','iter','Algorithm','sqp','MaxFunctionEvaluations',100000,'MaxIterations',10000);
 [var,Fval,convergence] = fmincon(@cost,varInit,[],[],[],[],lb,ub,@constraint,options); % Solving the problem
 convergence % = 1, good
 
@@ -87,31 +88,31 @@ for i = 1:N
 end
 
 % Plotting
-subplot(221); plot(tState,y,'linewidth',3);
-title('\textbf{a) Height}','interpreter','latex','FontSize',22,'FontWeight','bold');
-xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
-ylabel('\boldmath{$h$} \ \textbf{(m)}','interpreter','latex','FontSize',20,'FontWeight','bold');
-xlim([-inf inf]);
-ylim([-inf inf]);
-grid on;
-subplot(222); plot(tState,v,'linewidth',3) ;
-title('\textbf{b) Velocity}','interpreter','latex','FontSize',22,'FontWeight','bold');
-xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
-ylabel('\boldmath{$v$} \ \textbf{(m/s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
-xlim([-inf inf]);
-ylim([-inf inf]);
-grid on;
-subplot(223); plot(tState,m,'linewidth',3) ;
-title('\textbf{c) Mass}','interpreter','latex','FontSize',22,'FontWeight','bold');
-xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
-ylabel('\boldmath{$m$} \ \textbf{(kg)}','interpreter','latex','FontSize',20,'FontWeight','bold');
-xlim([-inf inf]);
-ylim([-inf inf]);
-grid on;
-subplot(224); plot(t,u,'linewidth',3);
-title('\textbf{d) Optimal Control}','interpreter','latex','FontSize',22,'FontWeight','bold');
-xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
-ylabel('\boldmath{$u$}','interpreter','latex','FontSize',20,'FontWeight','bold');
-xlim([-inf inf]);
-ylim([-inf inf]);
-grid on;
+% subplot(221); plot(tState,y,'linewidth',3);
+% title('\textbf{a) Height}','interpreter','latex','FontSize',22,'FontWeight','bold');
+% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% ylabel('\boldmath{$h$} \ \textbf{(m)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% xlim([-inf inf]);
+% ylim([-inf inf]);
+% grid on;
+% subplot(222); plot(tState,v,'linewidth',3) ;
+% title('\textbf{b) Velocity}','interpreter','latex','FontSize',22,'FontWeight','bold');
+% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% ylabel('\boldmath{$v$} \ \textbf{(m/s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% xlim([-inf inf]);
+% ylim([-inf inf]);
+% grid on;
+% subplot(223); plot(tState,m,'linewidth',3) ;
+% title('\textbf{c) Mass}','interpreter','latex','FontSize',22,'FontWeight','bold');
+% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% ylabel('\boldmath{$m$} \ \textbf{(kg)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% xlim([-inf inf]);
+% ylim([-inf inf]);
+% grid on;
+% subplot(224); plot(t,u,'linewidth',3);
+% title('\textbf{d) Optimal Control}','interpreter','latex','FontSize',22,'FontWeight','bold');
+% xlabel('\boldmath{$t$} \ \textbf{(s)}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% ylabel('\boldmath{$u$}','interpreter','latex','FontSize',20,'FontWeight','bold');
+% xlim([-inf inf]);
+% ylim([-inf inf]);
+% grid on;
