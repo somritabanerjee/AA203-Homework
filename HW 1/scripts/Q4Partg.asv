@@ -1,0 +1,60 @@
+%% AA 203 HW 1 Question 4 part g
+% Somrita Banerjee
+clc
+clear all
+close all
+k = 1;
+eps = 0.01;
+for initCond = 1:4
+    switch initCond
+        case 1
+            x{1} = [5;1];
+            y{1} = [5;1];
+            gamma = 10;
+        case 2
+            x{1} = [1;5];
+            y{1} = [1;5];
+            gamma = 10;
+        case 3
+            x{1} = [5;1];
+            y{1} = [5;1];
+            gamma = 2;
+        case 4
+            x{1} = [1;5];
+            y{1} = [1;5];
+            gamma = 2;
+    end
+    
+    while norm(gradF(x{k},gamma))>eps
+        % Constant step size 
+        eta = 0.05;
+        x{k+1}= x{k} - eta.*gradF(x{k},gamma);
+        k = k+1;
+    end
+    while norm(gradF(y{k},gamma))>eps
+        % Exact line search
+        d = -gradF(y{k},gamma);
+        Q = [1 0; 0 2*gamma];
+        eta = norm(d)/(d'*Q*d);
+        y{k+1}= y{k} - eta.*gradF(y{k},gamma);
+        k = k+1;
+    end
+    if initCond == 1
+        xMatInit1 = cell2mat(x);
+        yMatInit1 = cell2mat(y);
+    elseif initCond == 2
+        xMatInit2 = cell2mat(x);
+    elseif initCond == 3
+        xMatInit3 = cell2mat(x);
+    elseif initCond == 4
+        xMatInit4 = cell2mat(x);
+    end
+end
+figure
+hold on
+plot(xMatInit1(1,:),xMatInit1(2,:),'--.r')
+plot(xMatInit2(1,:),xMatInit2(2,:),'--.b')
+figure
+hold on
+plot(xMatInit3(1,:),xMatInit3(2,:),'--.r')
+plot(xMatInit4(1,:),xMatInit4(2,:),'--.b')

@@ -1,0 +1,238 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>solveMPC</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-05-22"><meta name="DC.source" content="solveMPC.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [Xallmpc, Uallmpc, horvalmpc, i] = solveMPC(horizon, x0, A, B, P, Q, R, xmax, xmin, umax, umin, Xf, solvehorizon)
+optvalmpc = 0;
+<span class="keyword">if</span> nargin &lt; 13
+    N = 50; <span class="comment">% solving horizon for solution</span>
+<span class="keyword">else</span>
+    N = solvehorizon;
+<span class="keyword">end</span>
+<span class="comment">%store solutions</span>
+n = size(B,1);
+m = size(B,2);
+Xallmpc = zeros(n,N+1);
+Uallmpc = zeros(m,N);
+T = horizon; <span class="comment">% mpc horizon passed in</span>
+x = x0; <span class="comment">%reset initial state</span>
+Xallmpc(:,1) = x;
+
+Qhalf = sqrtm(Q); Rhalf = sqrtm(R);
+
+fprintf(<span class="string">'MPC horizon=%d ; timestep = '</span>,T);
+
+<span class="comment">%step through time</span>
+<span class="keyword">for</span> i = 1:N
+    fprintf(<span class="string">'%d, '</span>,i-1);
+
+    <span class="comment">%cvx precision</span>
+    cvx_precision(min(max(min(abs(x))/10,1e-6),0.99999))
+    <span class="keyword">if</span> Xf == 0
+        cvx_begin <span class="string">quiet</span>
+            variables <span class="string">X(n,T+1)</span> <span class="string">U(m,T)</span>
+            max(X') &lt;= xmax'; max(U') &lt;= umax';
+            min(X') &gt;= xmin'; min(U') &gt;= umin';
+            X(:,2:T+1) == A*X(:,1:T)+B*U;
+            X(:,1) == x; <span class="comment">%initial state constraint</span>
+            X(:,T+1) == 0; <span class="comment">%terminal state constraint</span>
+            minimize (X(:,T+1)'*P*X(:,T+1)+pow_pos(norm([Qhalf*X(:,1:T);Rhalf*U],2),2))
+        cvx_end
+    <span class="keyword">else</span>
+        cvx_begin <span class="string">quiet</span>
+            variables <span class="string">X(n,T+1)</span> <span class="string">U(m,T)</span>
+            max(X') &lt;= xmax'; max(U') &lt;= umax';
+            min(X') &gt;= xmin'; min(U') &gt;= umin';
+            X(:,2:T+1) == A*X(:,1:T)+B*U;
+            X(:,1) == x; <span class="comment">%initial state constraint</span>
+            minimize (X(:,T+1)'*P*X(:,T+1)+pow_pos(norm([Qhalf*X(:,1:T);Rhalf*U],2),2))
+        cvx_end
+    <span class="keyword">end</span>
+
+    <span class="comment">%check feasibility</span>
+    <span class="keyword">if</span> strcmp(cvx_status,<span class="string">'Solved'</span>)
+
+        <span class="comment">%store control</span>
+        u= U(:,1);
+        Uallmpc(:,i) = u;
+
+        <span class="comment">%accumulate cost</span>
+        optvalmpc = optvalmpc + x'*Q*x + u'*R*u;
+
+        <span class="comment">%forward propagate state</span>
+        x = A*x+B*u;
+
+        <span class="comment">%record state</span>
+        Xallmpc(:,i+1) = x;
+
+    <span class="keyword">else</span>
+       fprintf(<span class="string">'ERROR'</span>)
+       <span class="comment">% break from loop</span>
+       optvalmpc = Inf;
+       <span class="keyword">break</span>;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+fprintf(<span class="string">'\n'</span>);
+
+
+horvalmpc = 0;
+<span class="keyword">for</span> k = 1:(horizon-1)
+    xk = Xallmpc(:,k);
+    uk = Uallmpc(:,k);
+    horvalmpc = horvalmpc + xk'*Q*xk + uk'*R*uk;
+<span class="keyword">end</span>
+x_last = Xallmpc(:,horizon);
+horvalmpc = horvalmpc + x_last'*P*x_last;
+
+<span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function [Xallmpc, Uallmpc, horvalmpc, i] = solveMPC(horizon, x0, A, B, P, Q, R, xmax, xmin, umax, umin, Xf, solvehorizon)
+optvalmpc = 0;
+if nargin < 13
+    N = 50; % solving horizon for solution
+else
+    N = solvehorizon;
+end
+%store solutions
+n = size(B,1);
+m = size(B,2); 
+Xallmpc = zeros(n,N+1);
+Uallmpc = zeros(m,N);
+T = horizon; % mpc horizon passed in
+x = x0; %reset initial state
+Xallmpc(:,1) = x;
+
+Qhalf = sqrtm(Q); Rhalf = sqrtm(R);
+
+fprintf('MPC horizon=%d ; timestep = ',T);
+
+%step through time
+for i = 1:N
+    fprintf('%d, ',i-1);
+
+    %cvx precision
+    cvx_precision(min(max(min(abs(x))/10,1e-6),0.99999))
+    if Xf == 0
+        cvx_begin quiet
+            variables X(n,T+1) U(m,T)
+            max(X') <= xmax'; max(U') <= umax';
+            min(X') >= xmin'; min(U') >= umin';
+            X(:,2:T+1) == A*X(:,1:T)+B*U;
+            X(:,1) == x; %initial state constraint
+            X(:,T+1) == 0; %terminal state constraint
+            minimize (X(:,T+1)'*P*X(:,T+1)+pow_pos(norm([Qhalf*X(:,1:T);Rhalf*U],2),2))
+        cvx_end
+    else
+        cvx_begin quiet
+            variables X(n,T+1) U(m,T)
+            max(X') <= xmax'; max(U') <= umax';
+            min(X') >= xmin'; min(U') >= umin';
+            X(:,2:T+1) == A*X(:,1:T)+B*U;
+            X(:,1) == x; %initial state constraint
+            minimize (X(:,T+1)'*P*X(:,T+1)+pow_pos(norm([Qhalf*X(:,1:T);Rhalf*U],2),2))
+        cvx_end
+    end
+
+    %check feasibility
+    if strcmp(cvx_status,'Solved')
+
+        %store control
+        u= U(:,1);
+        Uallmpc(:,i) = u;
+
+        %accumulate cost
+        optvalmpc = optvalmpc + x'*Q*x + u'*R*u;
+
+        %forward propagate state
+        x = A*x+B*u;
+
+        %record state
+        Xallmpc(:,i+1) = x;
+
+    else
+       fprintf('ERROR')
+       % break from loop
+       optvalmpc = Inf;
+       break;
+    end
+end
+fprintf('\n');
+
+
+horvalmpc = 0;
+for k = 1:(horizon-1)
+    xk = Xallmpc(:,k);
+    uk = Uallmpc(:,k);
+    horvalmpc = horvalmpc + xk'*Q*xk + uk'*R*uk;
+end
+x_last = Xallmpc(:,horizon);
+horvalmpc = horvalmpc + x_last'*P*x_last;
+
+end
+##### SOURCE END #####
+--></body></html>
